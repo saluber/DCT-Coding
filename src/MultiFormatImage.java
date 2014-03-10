@@ -4,94 +4,28 @@ import java.io.*;
 // Stores an image in multiple formats
 public class MultiFormatImage 
 {
+	// Image constants
+	private Integer _width, _height, _blockSize, _numHorizontalBlocks, _numVerticalBlocks;
+	// Class variables
 	private Boolean _isValidImage = true;
-	private Integer _width = 352; //512;
-	private Integer _height = 288; //512;
-	private Integer _blockSize = 8;
-	private Integer _numBlocks = 1584; //4096;
 	private BufferedImage _bufferedImage;
-	private Integer[][] _imagePixels;
 	private Integer[][][] _imageBlocks;
+	private Integer[][][][] _imageChannelBlocks;
 	
 	/* Constructors */
-	public MultiFormatImage(String filePath, int width, int height)
+	public MultiFormatImage(String filePath, int width, int height, int blockSize)
 	{
-		if ((width > 0) && (height > 0) && (filePath != null))
+		if ((filePath != null) && (width > 0) && (height > 0) && (blockSize > 0))
 		{
 			_width = width;
 			_height = height;
-			_numBlocks = ((_width + _blockSize - 1)/_blockSize) * ((_height + _blockSize - 1)/_blockSize);
-			readRGBFileImage(filePath);
-		}
-		else
-		{
-			_isValidImage = false;
-		}
-	}
-	
-	public MultiFormatImage(String filePath)
-	{
-		if (filePath != null)
-		{
-			readRGBFileImage(filePath);
-		}
-		else
-		{
-			_isValidImage = false;
-		}
-	}
-	
-	public MultiFormatImage(BufferedImage image)
-	{
-		if (image != null)
-		{
-			// Store copy of image
-			_width = image.getWidth();
-			_height = image.getHeight();
-			_numBlocks = ((_width + _blockSize - 1)/_blockSize) * ((_height + _blockSize - 1)/_blockSize);
-			_bufferedImage = new BufferedImage(_width, _height, image.getType());
-			_imagePixels = new Integer[_width][_height];
-			_imageBlocks = new Integer[_numBlocks][_blockSize][_blockSize];
-			int block = 0;
-			for (int y = 0; y < _height; y++)
-			{
-				block = y/_blockSize*((_width + _blockSize - 1)/_blockSize);
-				for (int x = 0; x < _width; x++)
-				{
-					_bufferedImage.setRGB(x, y, image.getRGB(x, y));
-					_imagePixels[x][y] = image.getRGB(x, y);
-					_imageBlocks[(block + x/_blockSize)][x%_blockSize][y%_blockSize] = image.getRGB(x, y);
-				}
-			}
-		}
-		else
-		{
-			_isValidImage = false;
-		}
-	}
-	
-	public MultiFormatImage(Integer[][] imagePixels)
-	{
-		if ((imagePixels != null) && (imagePixels[0] != null))
-		{
-			// Store copy of image
-			_width = imagePixels.length;
-			_height = imagePixels[0].length;
-			_numBlocks = ((_width + _blockSize - 1)/_blockSize) * ((_height + _blockSize - 1)/_blockSize);
+			_blockSize = blockSize;
+			_numHorizontalBlocks = (_width + _blockSize - 1)/_blockSize;
+			_numVerticalBlocks = (_height + _blockSize - 1)/_blockSize;
+			
 			_bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
-			_imagePixels = new Integer[_width][_height];
-			_imageBlocks = new Integer[_numBlocks][_blockSize][_blockSize];
-			int block = 0;
-			for (int y = 0; y < _height; y++)
-			{
-				block = y/_blockSize*((_width + _blockSize - 1)/_blockSize);
-				for (int x = 0; x < _width; x++)
-				{
-					_bufferedImage.setRGB(x, y, imagePixels[x][y]);
-					_imagePixels[x][y] = imagePixels[x][y];
-					_imageBlocks[(block + x/_blockSize)][x%_blockSize][y%_blockSize] = imagePixels[x][y];
-				}
-			}
+			_imageBlocks = new Integer[_numHorizontalBlocks * _numVerticalBlocks][_blockSize][_blockSize];
+			readRGBFileImage(filePath);
 		}
 		else
 		{
@@ -100,14 +34,9 @@ public class MultiFormatImage
 	}
 	
 	/* Public Methods */
-	public Integer GetWidth()
+	public Boolean IsValidImage()
 	{
-		return _width;
-	}
-	
-	public Integer GetHeight()
-	{
-		return _height;
+		return _isValidImage;
 	}
 	
 	public BufferedImage GetBufferedImage()
@@ -115,26 +44,14 @@ public class MultiFormatImage
 		return _bufferedImage;
 	}
 	
-	public Integer[][] GetImagePixels()
-	{
-		return _imagePixels;
-	}
-	
 	public Integer[][] GetImageBlock(int blockNum)
 	{
-		if ((blockNum < 0) || (blockNum >= _numBlocks))
+		if ((blockNum < 0) || (blockNum >= (_numHorizontalBlocks * _numVerticalBlocks)))
 		{
 			return null;
 		}
-		else
-		{
-			return _imageBlocks[blockNum];
-		}
-	}
-	
-	public Boolean IsValidImage()
-	{
-		return _isValidImage;
+		
+		return _imageBlocks[blockNum];
 	}
 	
 	/* Private Methods */
@@ -158,14 +75,11 @@ public class MultiFormatImage
 			}
 	
 			// Parse byte array to BufferImage and image pixel array
-			_bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
-			_imagePixels = new Integer[_width][_height];
-			_imageBlocks = new Integer[_numBlocks][_blockSize][_blockSize];
 			int ind = 0;
 			int block = 0;
 			for (int y = 0; y < _height; y++) 
 			{
-				block = y/_blockSize*((_width + _blockSize - 1)/_blockSize);
+				block = y/_blockSize*_numHorizontalBlocks;
 				for (int x = 0; x < _width; x++)
 				{
 					// byte a = 0;
@@ -175,7 +89,6 @@ public class MultiFormatImage
 					int pix = 0xff000000 | ((r & 0xff) << 16)
 							| ((g & 0xff) << 8) | (b & 0xff);
 					// int pix = ((a << 24) + (r << 16) + (g << 8) + b);
-					_imagePixels[x][y] = pix;
 					_bufferedImage.setRGB(x, y, pix);
 					_imageBlocks[(block + x/_blockSize)][x%_blockSize][y%_blockSize] = pix;
 					

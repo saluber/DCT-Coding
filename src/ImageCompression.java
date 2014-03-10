@@ -1,9 +1,7 @@
 
 public class ImageCompression
 {
-	// Constants
-	private static final Integer ImageWidth = 352;
-	private static final Integer ImageHeight = 288;
+	// Project Constants
 	private static final String ProjectTitle = "CSCI 576: Assignment 2";
 	private static final String OriginalImageTitle = "Original Image:";
 	private static final String DecodedImageTitle = "Decoded Image:";
@@ -18,6 +16,14 @@ public class ImageCompression
 		"Progressive Delivery (Spectral Selection)",
 		"Progressive Delivery (Successive Bit Approximation)"
 	};
+	
+	// Image Constants
+	private static final Integer ImageWidth = 352;
+	private static final Integer ImageHeight = 288;
+	private static final Integer BlockSize = 8;
+	private static final Integer Horizontal_Blocks = (ImageWidth + BlockSize - 1)/BlockSize;
+	private static final Integer Vertical_Blocks = (ImageHeight + BlockSize - 1)/BlockSize;
+	private static final Integer Blocks = Horizontal_Blocks * Vertical_Blocks;
 	
 	// Member variables
 	private static DoubleImageDisplay _display;
@@ -100,7 +106,7 @@ public class ImageCompression
 		}
 		
 		// Parse original image and update display
-		_originalImage = new MultiFormatImage(_imageFilePath, ImageWidth, ImageHeight);
+		_originalImage = new MultiFormatImage(_imageFilePath, ImageWidth, ImageHeight, BlockSize);
 		if (!_originalImage.IsValidImage())
 		{
 			System.out.println("Exiting program due to invalid image.");

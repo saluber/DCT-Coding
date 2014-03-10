@@ -9,7 +9,7 @@ public class SingleImageDisplay
 	public static final int IMAGE_WIDTH = 512;
 	public static final int IMAGE_HEIGHT = 512;
 	public static final int WINDOW_WIDTH = 662;
-	public static final int WINDOW_HEIGHT = 662;
+	public static final int WINDOW_HEIGHT = 762;
 	
 	private String _containerTitle = "Single Image Display";
 	private String _imageTitle = "Image";
@@ -99,7 +99,7 @@ public class SingleImageDisplay
 				x_position,
 				y_position);
 		textLabel.setSize(
-				SingleImageDisplay.HORIZONTAL_PADDING,
+				SingleImageDisplay.IMAGE_WIDTH,
 				SingleImageDisplay.TEXT_LABEL_HEIGHT);
 		textLabel.setHorizontalTextPosition(JLabel.CENTER);
 		
