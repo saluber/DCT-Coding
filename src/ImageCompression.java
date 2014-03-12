@@ -20,14 +20,14 @@ public class ImageCompression
 	// Image Constants
 	private static final Integer ImageWidth = 352;
 	private static final Integer ImageHeight = 288;
-	private static final Integer BlockSize = 8;
+	private static final Integer BlockSize = DCTCoder.BLOCK_SIZE;
 	private static final Integer Horizontal_Blocks = (ImageWidth + BlockSize - 1)/BlockSize;
 	private static final Integer Vertical_Blocks = (ImageHeight + BlockSize - 1)/BlockSize;
-	private static final Integer Blocks = Horizontal_Blocks * Vertical_Blocks;
 	
 	// Member variables
 	private static DoubleImageDisplay _display;
-	public static MultiFormatImage _originalImage;
+	private static RGBBlockImage _inputImage;
+	private static DCTCoder _dctCoder;
 	
 	// Input arguments
 	private static String _imageFilePath; // Path to starting rgb image file
@@ -88,7 +88,7 @@ public class ImageCompression
 				_inputArgumentsList = new String[4];
 				_inputArgumentsList[0] = new String(InputArgumentNamesList[0] + _imageFilePath);
 				_inputArgumentsList[1] = new String(InputArgumentNamesList[1] + _quantizationLevel);
-				_inputArgumentsList[2] = new String(InputArgumentNamesList[2] + DeliveryModesList[_deliveryMode]);
+				_inputArgumentsList[2] = new String(InputArgumentNamesList[2] + DeliveryModesList[_deliveryMode-1]);
 				_inputArgumentsList[3] = new String(InputArgumentNamesList[3] + _latency);
 			}
 		}
@@ -106,8 +106,8 @@ public class ImageCompression
 		}
 		
 		// Parse original image and update display
-		_originalImage = new MultiFormatImage(_imageFilePath, ImageWidth, ImageHeight, BlockSize);
-		if (!_originalImage.IsValidImage())
+		_inputImage = new RGBBlockImage(_imageFilePath, ImageWidth, ImageHeight, BlockSize);
+		if (!_inputImage.isValidImage())
 		{
 			System.out.println("Exiting program due to invalid image.");
 			return;
@@ -115,7 +115,17 @@ public class ImageCompression
 		
 		// Initialize program output display and show first image
 		_display = new DoubleImageDisplay(ProjectTitle, OriginalImageTitle, DecodedImageTitle, _inputArgumentsList);
-		_display.setFirstImage(_originalImage.GetBufferedImage());
+		_display.setFirstImage(_inputImage.getBufferedImage());
 		
+		// Initialize DCT coder
+		_dctCoder = new DCTCoder(_quantizationLevel, _deliveryMode, _latency, _display);
+		
+		// Encode
+		_dctCoder.encodeImage(_inputImage.getImageBlocks());
+		_dctCoder.quantizeImage(_inputImage.getImageBlocks());
+		
+		// Decode using simulated delivery mode specified
+		_dctCoder.dequantizeImage(_inputImage);
+		_dctCoder.decodeImage(_inputImage);
 	}
 }
