@@ -53,8 +53,21 @@ public class RGBBlock
 		int r = (int)_redBlock.get(row, col);
 		int g = (int)_greenBlock.get(row, col);
 		int b = (int)_blueBlock.get(row, col);
+		System.out.println("r:" + r);
+		System.out.println("g:" + g);
+		System.out.println("b:" + b);
 		
-		int pix = ((0 << 24) + (r << 16) + (g << 8) + b);
+		int pix =  0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+		
+		if (pix > 255)
+		{
+			pix = 255;
+		}
+		else if (pix < 0)
+		{
+			pix = 0;
+		}
+		
 		return pix;
 	}
 }

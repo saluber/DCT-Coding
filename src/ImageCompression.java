@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 
 public class ImageCompression
 {
@@ -120,12 +122,12 @@ public class ImageCompression
 		// Initialize DCT coder
 		_dctCoder = new DCTCoder(_quantizationLevel, _deliveryMode, _latency, _display);
 		
-		// Encode
-		_dctCoder.encodeImage(_inputImage.getImageBlocks());
+		// Encode 
+		_dctCoder.dctImage(_inputImage.getImageBlocks());
 		_dctCoder.quantizeImage(_inputImage.getImageBlocks());
 		
 		// Decode using simulated delivery mode specified
-		_dctCoder.dequantizeImage(_inputImage);
-		_dctCoder.decodeImage(_inputImage);
+		_dctCoder.dequantizeImage(_inputImage.getImageBlocks());
+		_dctCoder.idctImage(_inputImage);
 	}
 }

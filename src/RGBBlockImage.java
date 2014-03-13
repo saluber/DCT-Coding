@@ -13,6 +13,31 @@ public class RGBBlockImage
 	private ArrayList<RGBBlock> _imageBlocks; 
 	
 	/* Constructors */
+	// Initializes empty (all black pixel) BufferedImage and ImageBlocks
+	public RGBBlockImage(int width, int height, int blockSize)
+	{
+		if ((width > 0) && (height > 0) && (blockSize > 0))
+		{
+			_width = width;
+			_height = height;
+			_blockSize = blockSize;
+			_numHorizontalBlocks = (_width + _blockSize - 1)/_blockSize;
+			_numVerticalBlocks = (_height + _blockSize - 1)/_blockSize;
+			
+			_bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
+			_imageBlocks = new ArrayList<RGBBlock>(_numHorizontalBlocks * _numVerticalBlocks);
+			for (int i = 0; i < (_numHorizontalBlocks * _numVerticalBlocks); i++)
+			{
+				_imageBlocks.add(new RGBBlock());
+			}
+		}
+		else
+		{
+			_isValidImage = false;
+		}
+	}
+	
+	// Initializes BufferedImage and ImageBlocks from rgb image file
 	public RGBBlockImage(String filePath, int width, int height, int blockSize)
 	{
 		if ((filePath != null) && (width > 0) && (height > 0) && (blockSize > 0))
@@ -38,6 +63,7 @@ public class RGBBlockImage
 		}
 	}
 	
+	// Copy Constructor (Initializes BufferedImage and ImageBlocks from rgbBlockImage copy)
 	public RGBBlockImage(RGBBlockImage rgbBlockImage)
 	{
 		_width = rgbBlockImage.getWidth();
@@ -165,17 +191,17 @@ public class RGBBlockImage
 				for (int x = 0; x < _width; x++)
 				{
 					// byte a = 0;
-					byte r = bytes[ind];
-					byte g = bytes[ind + _height * _width];
-					byte b = bytes[ind + _height * _width * 2];
+					Byte r = bytes[ind];
+					Byte g = bytes[ind + _height * _width];
+					Byte b = bytes[ind + _height * _width * 2];
 					int pix = 0xff000000 | ((r & 0xff) << 16)
 							| ((g & 0xff) << 8) | (b & 0xff);
 					// int pix = ((a << 24) + (r << 16) + (g << 8) + b);
 					_bufferedImage.setRGB(x, y, pix);
 					
-					_imageBlocks.get(block + x/_blockSize).redBlock().set(x%_blockSize, y%_blockSize, ((r & 0xff) << 16));
-					_imageBlocks.get(block + x/_blockSize).greenBlock().set(x%_blockSize, y%_blockSize, ((g & 0xff) << 8));
-					_imageBlocks.get(block + x/_blockSize).blueBlock().set(x%_blockSize, y%_blockSize, (b & 0xff));
+					_imageBlocks.get(block + x/_blockSize).redBlock().set(x%_blockSize, y%_blockSize, (r & 0xFF));
+					_imageBlocks.get(block + x/_blockSize).greenBlock().set(x%_blockSize, y%_blockSize, (g & 0xFF));
+					_imageBlocks.get(block + x/_blockSize).blueBlock().set(x%_blockSize, y%_blockSize, (b & 0xFF));
 					
 					ind++;
 				}
