@@ -164,6 +164,9 @@ public class DCTCoder
 				}
 			}
 		}
+		
+		decodeImage.setImageBlocks(decodeImage.getImageBlocks());
+		_decodeDisplay.setSecondImage(decodeImage.getBufferedImage());
 	}
 	
 	// Decode image for simulated progressive (spectral selection) delivery mode

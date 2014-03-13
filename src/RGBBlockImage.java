@@ -25,6 +25,14 @@ public class RGBBlockImage
 			_numVerticalBlocks = (_height + _blockSize - 1)/_blockSize;
 			
 			_bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
+			for (int y = 0; y < _height; y++)
+			{
+				for (int x = 0; x < _width; x++)
+				{
+					_bufferedImage.setRGB(x, y, 0);
+				}
+			}
+			
 			_imageBlocks = new ArrayList<RGBBlock>(_numHorizontalBlocks * _numVerticalBlocks);
 			for (int i = 0; i < (_numHorizontalBlocks * _numVerticalBlocks); i++)
 			{
@@ -74,6 +82,14 @@ public class RGBBlockImage
 		
 		// Create empty buffered image and block image
 		_bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
+		for (int y = 0; y < _height; y++)
+		{
+			for (int x = 0; x < _width; x++)
+			{
+				_bufferedImage.setRGB(x, y, 0);
+			}
+		}
+		
 		_imageBlocks = new ArrayList<RGBBlock>(_numHorizontalBlocks * _numVerticalBlocks);
 		for (int i = 0; i < (_numHorizontalBlocks * _numVerticalBlocks); i++)
 		{
@@ -153,9 +169,9 @@ public class RGBBlockImage
 		// Set pixels in Buffered Image
 		int startRow = (blockNum/_numHorizontalBlocks)*_blockSize;
 		int startCol = (blockNum%_numHorizontalBlocks)*_blockSize;
-		for (int r = startRow; r < DCTCoder.BLOCK_SIZE; r++)
+		for (int r = startRow; r < _blockSize; r++)
 		{
-			for (int c = startCol; c < DCTCoder.BLOCK_SIZE; c++)
+			for (int c = startCol; c < _blockSize; c++)
 			{
 				_bufferedImage.setRGB(r, c, block.getRGB(r, c));
 			}
