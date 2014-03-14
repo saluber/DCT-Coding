@@ -120,9 +120,6 @@ public class DCTCoder
 		{
 			this.progressiveSBADecode(image);
 		}
-		
-		// TODO: remove
-		System.out.println("Done!");
 	}
 	
 	public Matrix idctBlock(Matrix block)
@@ -254,7 +251,7 @@ public class DCTCoder
 		// Get de-quantized encoded image blocks
 		ArrayList<RGBBlock> imageBlocks = image.getImageBlocks();
 		// Decode image with increasing number of significant bits (starts at 2 because 1st bit is sign)
-		for (int nSigBits = 2; nSigBits < 32; nSigBits++)
+		for (int nSigBits = 1; nSigBits <= 32; nSigBits++)
 		{
 			// Decode each image block using nSigBits number of significant bits of each coefficient
 			for (int i = 0; i < imageBlocks.size(); i++)
@@ -291,7 +288,8 @@ public class DCTCoder
 	
 	private int getBitSign(int n)
 	{
-		int signBit = (n >> 31) & 1;
+		// shift int over by 24 bits (3 bytes) to get sign bit
+		int signBit = (n >> 24) & 1;
 		if (signBit == 1)
 		{
 			return -1;
@@ -302,23 +300,27 @@ public class DCTCoder
 		}
 	}
 	
-	// Creates a new matrix containing numBits-1 significant bits of each element in input matrix
+	// Creates a new matrix containing numBits significant bits of each element in input matrix
 	private Matrix bitmaskBlock(Matrix m, int numBits)
 	{
 		double[][] maskedBlock = new double[BLOCK_SIZE][BLOCK_SIZE];
+		int bitsToShift = 32 - numBits;
 		for (int y = 0; y < BLOCK_SIZE; y++)
 		{
 			for (int x = 0; x < BLOCK_SIZE; x++)
 			{
 				int coeff = (int)m.get(x, y);
+				int sign = this.getBitSign(coeff);
+				coeff = Math.abs(coeff); // get absolute value of coefficient to avoid 2's compliment conversion
 				// Bit_sign * numBits-1 bits of coefficient
-				maskedBlock[x][y] = (double)(this.getBitSign(coeff) * ((coeff << 1) >> numBits));
+				maskedBlock[x][y] = (double)(sign * (coeff >> bitsToShift));
 			}
 		}
 		
 		return new Matrix(maskedBlock);
 	}
 	
+	// Test program to validate dct/idct logic
 	public static void main(String[] args)
 	{
 		DCTCoder _dctCoder = new DCTCoder(2, 1, 100, null);
