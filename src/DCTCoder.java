@@ -16,17 +16,17 @@ public class DCTCoder
 
 	public static Matrix computeDCTMatrix()
 	{
-		double[][] dctMatrixArray = new double[8][8];
-		for (int c = 0; c < BLOCK_SIZE; c++)
+		double[][] dctMatrixArray = new double[BLOCK_SIZE][BLOCK_SIZE];
+		for (int y = 0; y < BLOCK_SIZE; y++)
 		{
-			dctMatrixArray[0][c] = 0.5*C[0];
+			dctMatrixArray[0][y] = 0.5*C[0];
 		}
 		
-		for (int r = 1; r < BLOCK_SIZE; r++)
+		for (int x = 1; x < BLOCK_SIZE; x++)
 		{
-			for (int c = 0; c < BLOCK_SIZE; c++)
+			for (int y = 0; y < BLOCK_SIZE; y++)
 			{
-				dctMatrixArray[r][c] = 0.5*Math.cos((2.0*c+1.0)*(r*Math.PI)/(2.0*BLOCK_SIZE));
+				dctMatrixArray[x][y] = 0.5*Math.cos((2.0*y+1.0)*(x*Math.PI)/(2.0*BLOCK_SIZE));
 			}
 		}
 		
@@ -79,11 +79,11 @@ public class DCTCoder
 	// Quantize and round block
 	public void quantizeBlock(Matrix block)
 	{
-		for (int r = 0; r < BLOCK_SIZE; r++)
+		for (int y = 0; y < BLOCK_SIZE; y++)
 		{
-			for (int c = 0; c < BLOCK_SIZE; c++)
+			for (int x = 0; x < BLOCK_SIZE; x++)
 			{
-				block.set(r, c, Math.round(block.get(r, c)/_qFactor));
+				block.set(x, y, Math.round(block.get(x, y)/_qFactor));
 			}
 		}
 	}
@@ -121,12 +121,18 @@ public class DCTCoder
 			this.progressiveSBADecode(image);
 		}
 		
+		// TODO: remove
 		System.out.println("Done!");
 	}
 	
 	public Matrix idctBlock(Matrix block)
 	{
 		return (_dctMatrixT.times(block)).times(_dctMatrix);
+	}
+	
+	public Matrix idctBlock(Matrix block, Matrix dctTransform, Matrix dctTransformTrans)
+	{
+		return (dctTransform.times(block)).times(dctTransformTrans);
 	}
 	
 	// Decode image for simulated baseline delivery mode
@@ -136,6 +142,7 @@ public class DCTCoder
 		RGBBlockImage decodeImage = new RGBBlockImage(image.getWidth(), image.getHeight(), image.getBlockSize());
 		// Get de-quantized encoded image blocks
 		ArrayList<RGBBlock> imageBlocks = image.getImageBlocks();
+		// Decode one block each iteration
 		for (int i = 0; i < imageBlocks.size(); i++)
 		{
 			// Get RGBBlock to decode and RGBBlock to store result in
@@ -153,7 +160,50 @@ public class DCTCoder
 			// Display updated decoded image result
 			_decodeDisplay.setSecondImage(decodeImage.getBufferedImage());
 			
-			// Sleep for latency time
+			// Sleep for latency time between decoding iterations
+			if (_latency != 0)
+			{
+				try {
+					TimeUnit.MILLISECONDS.sleep(_latency);
+				} catch (InterruptedException e) {
+					// Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	// Decode image for simulated progressive (spectral selection) delivery mode
+	public void progressiveSSDecode(RGBBlockImage image)
+	{
+		// Create new empty image to store decoded image result
+		RGBBlockImage decodeImage = new RGBBlockImage(image.getWidth(), image.getHeight(), image.getBlockSize());
+		// Get de-quantized encoded image blocks
+		ArrayList<RGBBlock> imageBlocks = image.getImageBlocks();
+		// Decode image with increasing number of block coefficients used
+		for (int nCoeffs = 1; nCoeffs <= (BLOCK_SIZE * BLOCK_SIZE); nCoeffs++)
+		{
+			// Decode each image block using nSigBits number of significant bits of each coefficient
+			for (int i = 0; i < imageBlocks.size(); i++)
+			{
+				// Get and copy RGBBlock to decode (all bits)
+				RGBBlock encodeBlock = imageBlocks.get(i);
+				// Get RGBBlock to store decode result in
+				RGBBlock decodeBlock = decodeImage.getImageBlock(i);
+				
+				// Apply "coeff mask" to each block get first nCoeff coefficients (set the rest to 0), then decode
+				decodeBlock.setRedBlock(this.idctBlock(this.coeffmaskBlock(encodeBlock.redBlock(), nCoeffs)));
+				decodeBlock.setGreenBlock(this.idctBlock(this.coeffmaskBlock(encodeBlock.greenBlock(), nCoeffs)));
+				decodeBlock.setBlueBlock(this.idctBlock(this.coeffmaskBlock(encodeBlock.blueBlock(), nCoeffs)));
+
+				// Save decode block result to decodedImage (also updates decodedImage.BufferedImage)
+				decodeImage.setImageBlock(i, decodeBlock);
+			}
+			
+			// Display updated decoded image result
+			_decodeDisplay.setSecondImage(decodeImage.getBufferedImage());
+			
+			// Sleep for latency time between decoding iterations
 			if (_latency != 0)
 			{
 				try {
@@ -165,20 +215,108 @@ public class DCTCoder
 			}
 		}
 		
-		decodeImage.setImageBlocks(decodeImage.getImageBlocks());
-		_decodeDisplay.setSecondImage(decodeImage.getBufferedImage());
 	}
 	
-	// Decode image for simulated progressive (spectral selection) delivery mode
-	public void progressiveSSDecode(RGBBlockImage encodedImage)
+	// Creates and returns a new matrix containing numCoeffs coeff values from input matrix (all other coeffs sets to 0)
+	private Matrix coeffmaskBlock(Matrix m, int numCoeffs)
 	{
-		// TODO
+		// Check for valid input args
+		if ((m == null) || (numCoeffs < 0) || (numCoeffs > (BLOCK_SIZE * BLOCK_SIZE)))
+		{
+			return null;
+		}
+		
+		double[][] maskedBlock = new double[BLOCK_SIZE][BLOCK_SIZE];
+		
+		// Iterate through input matrix until numCoeff coefficients have been copied into maskedBlock
+		for (int x = 0; x < BLOCK_SIZE; x++)
+		{
+			for (int y = 0; y < BLOCK_SIZE; y++)
+			{
+				if (numCoeffs == 0)
+				{
+					break;
+				}
+				
+				maskedBlock[x][y] = m.get(x, y);
+				numCoeffs--;
+			}
+		}
+		
+		return new Matrix(maskedBlock);
 	}
 	
 	// Decode image for simulated progressive (successive bit approximation) delivery mode
-	public void progressiveSBADecode(RGBBlockImage encodedImage)
+	public void progressiveSBADecode(RGBBlockImage image)
 	{
-		// TODO
+		// Create new empty image to store decoded image result
+		RGBBlockImage decodeImage = new RGBBlockImage(image.getWidth(), image.getHeight(), image.getBlockSize());
+		// Get de-quantized encoded image blocks
+		ArrayList<RGBBlock> imageBlocks = image.getImageBlocks();
+		// Decode image with increasing number of significant bits (starts at 2 because 1st bit is sign)
+		for (int nSigBits = 2; nSigBits < 32; nSigBits++)
+		{
+			// Decode each image block using nSigBits number of significant bits of each coefficient
+			for (int i = 0; i < imageBlocks.size(); i++)
+			{
+				// Get and copy RGBBlock to decode (all bits)
+				RGBBlock encodeBlock = imageBlocks.get(i);
+				// Get RGBBlock to store decode result in
+				RGBBlock decodeBlock = decodeImage.getImageBlock(i);
+				
+				// Apply bitmask to each block get first nSigBits significant bits, then decode
+				decodeBlock.setRedBlock(this.idctBlock(this.bitmaskBlock(encodeBlock.redBlock(), nSigBits)));
+				decodeBlock.setGreenBlock(this.idctBlock(this.bitmaskBlock(encodeBlock.greenBlock(), nSigBits)));
+				decodeBlock.setBlueBlock(this.idctBlock(this.bitmaskBlock(encodeBlock.blueBlock(), nSigBits)));
+
+				// Save decode block result to decodedImage (also updates decodedImage.BufferedImage)
+				decodeImage.setImageBlock(i, decodeBlock);
+			}
+			
+			// Display updated decoded image result
+			_decodeDisplay.setSecondImage(decodeImage.getBufferedImage());
+			
+			// Sleep for latency time between decoding iterations
+			if (_latency != 0)
+			{
+				try {
+					TimeUnit.MILLISECONDS.sleep(_latency);
+				} catch (InterruptedException e) {
+					// Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	private int getBitSign(int n)
+	{
+		int signBit = (n >> 31) & 1;
+		if (signBit == 1)
+		{
+			return -1;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	
+	// Creates a new matrix containing numBits-1 significant bits of each element in input matrix
+	private Matrix bitmaskBlock(Matrix m, int numBits)
+	{
+		double[][] maskedBlock = new double[BLOCK_SIZE][BLOCK_SIZE];
+		for (int y = 0; y < BLOCK_SIZE; y++)
+		{
+			for (int x = 0; x < BLOCK_SIZE; x++)
+			{
+				int coeff = (int)m.get(x, y);
+				// Bit_sign * numBits-1 bits of coefficient
+				maskedBlock[x][y] = (double)(this.getBitSign(coeff) * ((coeff << 1) >> numBits));
+			}
+		}
+		
+		return new Matrix(maskedBlock);
 	}
 	
 	public static void main(String[] args)

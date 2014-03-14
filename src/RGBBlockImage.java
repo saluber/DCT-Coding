@@ -167,13 +167,13 @@ public class RGBBlockImage
 		_imageBlocks.set(blockNum, new RGBBlock(block));
 		
 		// Set pixels in Buffered Image
-		int startRow = (blockNum/_numHorizontalBlocks)*_blockSize;
-		int startCol = (blockNum%_numHorizontalBlocks)*_blockSize;
-		for (int r = startRow; r < _blockSize; r++)
+		int offsetY = (blockNum/_numHorizontalBlocks)*_blockSize;
+		int offsetX = (blockNum%_numHorizontalBlocks)*_blockSize;
+		for (int y = 0; y < _blockSize; y++)
 		{
-			for (int c = startCol; c < _blockSize; c++)
+			for (int x = 0; x < _blockSize; x++)
 			{
-				_bufferedImage.setRGB(r, c, block.getRGB(r, c));
+				_bufferedImage.setRGB(x + offsetX, y + offsetY, block.getRGB(x, y));
 			}
 		}
 	}
