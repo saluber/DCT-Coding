@@ -65,6 +65,31 @@ public class DCTCoder
 		return (_dctMatrix.times(block)).times(_dctMatrixT);
 	}
 	
+	public Matrix dctBlockNaiveMethod(Matrix block)
+	{
+		double[][] dctCoeffs = new double[BLOCK_SIZE][BLOCK_SIZE];
+		for (int u = 0; u < BLOCK_SIZE; u++)
+		{
+			for (int v = 0; v < BLOCK_SIZE; v++)
+			{
+				for (int x = 0; x < BLOCK_SIZE; x++)
+				{
+					for (int y = 0; y < BLOCK_SIZE; y++)
+					{
+						dctCoeffs[u][v] += 
+								block.get(x, y)
+								* Math.cos((2.0*x + 1.0)*u*Math.PI/16.0) 
+								* Math.cos((2.0*y + 1.0)*v*Math.PI/16.0);
+					}
+				}
+				
+				dctCoeffs[u][v] *= 0.25 * C[u] * C[v]; 
+			}
+		}
+		
+		return new Matrix(dctCoeffs);
+	}
+	
 	// Quantize all image blocks
 	public void quantizeImage(ArrayList<RGBBlock> imageBlocks)
 	{
@@ -125,6 +150,31 @@ public class DCTCoder
 	public Matrix idctBlock(Matrix block)
 	{
 		return (_dctMatrixT.times(block)).times(_dctMatrix);
+	}
+	
+	public Matrix idctBlockNaiveMethod(Matrix block)
+	{
+		double[][] idctCoeffs = new double[BLOCK_SIZE][BLOCK_SIZE];
+		for (int x = 0; x < BLOCK_SIZE; x++)
+		{
+			for (int y = 0; y < BLOCK_SIZE; y++)
+			{
+				for (int u = 0; u < BLOCK_SIZE; u++)
+				{
+					for (int v = 0; v < BLOCK_SIZE; v++)
+					{
+						idctCoeffs[x][y] += 
+								C[u] * C[v] * block.get(u, v)
+								* Math.cos((2.0*x + 1.0)*u*Math.PI/16.0)
+								* Math.cos((2.0*y + 1.0)*v*Math.PI/16.0);
+					}
+				}
+				
+				idctCoeffs[x][y] *= 0.25; 
+			}
+		}
+		
+		return new Matrix(idctCoeffs);
 	}
 	
 	public Matrix idctBlock(Matrix block, Matrix dctTransform, Matrix dctTransformTrans)
@@ -342,7 +392,9 @@ public class DCTCoder
 		System.out.println("Printing original block:");
 		A.print();
 		
-		//_dctCoder.encodeBlock(A);
+		System.out.println("\nPrinting naive method encoded block:");
+		_dctCoder.dctBlockNaiveMethod(A).print();
+		
 		A = _dctCoder.dctBlock(A);
 		System.out.println("\nPrinting encoded block:");
 		A.print();
@@ -355,8 +407,11 @@ public class DCTCoder
 		System.out.println("\nPrinting dequantized block:");
 		A.print();
 		
+		System.out.println("\nPrinting naive method decoded block:");
+		_dctCoder.idctBlockNaiveMethod(A).print();
+		
 		A = _dctCoder.idctBlock(A);
-		System.out.println("\nPrinting deencoded block:");
+		System.out.println("\nPrinting decoded block:");
 		A.print();
 	}
 }

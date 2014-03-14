@@ -3,13 +3,13 @@ import javax.swing.*;
 
 public class DoubleImageDisplay
 {
-	public static final int HORIZONTAL_PADDING = 50;
+	public static final int HORIZONTAL_PADDING = 75;
 	public static final int VERTICAL_PADDING = 50;
 	public static final int TEXT_LABEL_HEIGHT = 25;
-	public static final int IMAGE_WIDTH = 512;
-	public static final int IMAGE_HEIGHT = 512;
-	public static final int WINDOW_WIDTH = 1224;
-	public static final int WINDOW_HEIGHT = 762;
+	public static final int IMAGE_WIDTH = 288;
+	public static final int IMAGE_HEIGHT = 352;
+	public static final int WINDOW_WIDTH = 950;
+	public static final int WINDOW_HEIGHT = 550;
 	
 	private String _containerTitle = "Double Image Display";
 	private String _firstImageTitle = "First Image:";
@@ -112,7 +112,7 @@ public class DoubleImageDisplay
 		// Draw additional text labels (if any)
 		if (labels != null)
 		{
-			int y_position = DoubleImageDisplay.VERTICAL_PADDING*3/2 + DoubleImageDisplay.IMAGE_HEIGHT;
+			int y_position = DoubleImageDisplay.VERTICAL_PADDING + DoubleImageDisplay.IMAGE_HEIGHT;
 			for (int i = 0; i < labels.length; i++)
 			{
 				JLabel textLabel = createTextLabel(
@@ -137,7 +137,7 @@ public class DoubleImageDisplay
 				x_position,
 				y_position);
 		textLabel.setSize(
-				DoubleImageDisplay.IMAGE_WIDTH,
+				DoubleImageDisplay.IMAGE_WIDTH*2,
 				DoubleImageDisplay.TEXT_LABEL_HEIGHT);
 		textLabel.setHorizontalTextPosition(JLabel.CENTER);
 		
